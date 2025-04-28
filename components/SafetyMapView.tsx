@@ -1,15 +1,69 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
-import { MapPin } from 'lucide-react-native';
 import { Location, SafetyZone } from '@/types';
+
+// Define types for map components
+type MapViewType = any;
+type CircleType = any;
+type MarkerType = any;
+type MapRefType = {
+  animateToRegion: (region: {
+    latitude: number;
+    longitude: number;
+    latitudeDelta: number;
+    longitudeDelta: number;
+  }) => void;
+};
+
+// Only define map components when not on web
+let MapView: MapViewType = null;
+let Circle: CircleType = null;
+let Marker: MarkerType = null;
+
+// Dynamically import map components only on native platforms
+if (Platform.OS !== 'web') {
+  try {
+    const Maps = require('react-native-maps');
+    MapView = Maps.default;
+    Circle = Maps.Circle;
+    Marker = Maps.Marker;
+  } catch (error) {
+    console.error('Failed to load react-native-maps:', error);
+  }
+}
 
 interface SafetyMapViewProps {
   location: Location;
   safetyZones: SafetyZone[];
   isLoading: boolean;
+  onSelectZone?: (zone: SafetyZone) => void;
 }
 
-export function SafetyMapView({ location, safetyZones, isLoading }: SafetyMapViewProps) {
+export function SafetyMapView({ location, safetyZones, isLoading, onSelectZone }: SafetyMapViewProps) {
+  const mapRef = useRef<MapRefType | null>(null);
+
+  // Initial region is set to New York City
+  const initialRegion = {
+    latitude: 40.7128,
+    longitude: -74.0060,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+  };
+
+  // If location is available, animate to user's location
+  useEffect(() => {
+    if (location && mapRef.current && Platform.OS !== 'web' && MapView) {
+      const userLocation = {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      };
+      
+      mapRef.current.animateToRegion(userLocation);
+    }
+  }, [location]);
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -18,11 +72,13 @@ export function SafetyMapView({ location, safetyZones, isLoading }: SafetyMapVie
     );
   }
 
-  // On web, we'll show a placeholder with the safety zones listed
-  // In a real app with react-native-maps, we'd render an actual map here
-  return (
-    <View style={styles.container}>
-      {Platform.OS === 'web' ? (
+  // Check if map components are available
+  const mapComponentsAvailable = Platform.OS === 'web' || (MapView && Circle && Marker);
+
+  // On web or when map components are not available, show a placeholder with the safety zones listed
+  if (!mapComponentsAvailable) {
+    return (
+      <View style={styles.container}>
         <View style={styles.webMapPlaceholder}>
           <Text style={styles.mapTitle}>Safety Map</Text>
           <Text style={styles.mapDescription}>
@@ -31,7 +87,11 @@ export function SafetyMapView({ location, safetyZones, isLoading }: SafetyMapVie
           <View style={styles.zonesContainer}>
             <Text style={styles.zonesTitle}>Nearby Safety Zones:</Text>
             {safetyZones.map((zone) => (
-              <View key={zone.id} style={styles.zoneItem}>
+              <View 
+                key={zone.id} 
+                style={styles.zoneItem}
+                onTouchEnd={() => onSelectZone && onSelectZone(zone)}
+              >
                 <View style={[
                   styles.zoneIndicator, 
                   zone.safetyLevel === 'safe' 
@@ -62,14 +122,67 @@ export function SafetyMapView({ location, safetyZones, isLoading }: SafetyMapVie
             </View>
           </View>
         </View>
-      ) : (
-        <View style={styles.mapContainer}>
-          {/* On native, this would be a real map component */}
-          <Text>Native map will be rendered here</Text>
-        </View>
-      )}
+      </View>
+    );
+  }
+
+  // Render the actual map when components are available
+  return (
+    <View style={styles.container}>
+      <MapView
+        ref={mapRef}
+        style={styles.map}
+        initialRegion={initialRegion}
+      >
+        {/* User Location Marker */}
+        {location && (
+          <Marker
+            coordinate={{
+              latitude: location.latitude,
+              longitude: location.longitude,
+            }}
+            title="You are here"
+          >
+            <View style={styles.currentLocationMarker}>
+              <View style={styles.currentLocationDot} />
+            </View>
+          </Marker>
+        )}
+
+        {/* Safety Zones */}
+        {safetyZones.map((zone) => (
+          <Circle
+            key={zone.id}
+            center={{
+              latitude: zone.latitude,
+              longitude: zone.longitude,
+            }}
+            radius={zone.radius}
+            fillColor={getZoneColor(zone.safetyLevel)}
+            strokeColor={getZoneColor(zone.safetyLevel)}
+            strokeWidth={1}
+            onPress={() => onSelectZone && onSelectZone(zone)}
+          />
+        ))}
+      </MapView>
     </View>
   );
+}
+
+// Helper to get color based on safety level
+function getZoneColor(safetyLevel: string, noOpacity = false): string {
+  const opacity = noOpacity ? '' : '80'; // 50% opacity
+  
+  switch(safetyLevel) {
+    case 'safe':
+      return '#10b981' + opacity; // green
+    case 'moderate':
+      return '#f59e0b' + opacity; // yellow/orange
+    case 'unsafe':
+      return '#ef4444' + opacity; // red
+    default:
+      return '#10b981' + opacity; // default to safe
+  }
 }
 
 const styles = StyleSheet.create({
@@ -109,11 +222,8 @@ const styles = StyleSheet.create({
     color: '#7f8c8d',
     marginBottom: 16,
   },
-  mapContainer: {
-    flex: 1,
-    backgroundColor: '#e0e0e0',
-    alignItems: 'center',
-    justifyContent: 'center',
+  map: {
+    ...StyleSheet.absoluteFillObject,
   },
   zonesContainer: {
     marginTop: 16,
@@ -186,5 +296,21 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 14,
     color: '#2c3e50',
+  },
+  currentLocationMarker: {
+    height: 24,
+    width: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  currentLocationDot: {
+    height: 12,
+    width: 12,
+    borderRadius: 6,
+    backgroundColor: '#6366f1',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
 });

@@ -1,9 +1,13 @@
+import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { SplashScreen } from 'expo-router';
 import { useFonts } from 'expo-font';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { AuthProvider } from '../context/AuthContext';
+
 import { 
   Inter_400Regular, 
   Inter_500Medium,
@@ -45,12 +49,14 @@ export default function RootLayout() {
   }
 
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
+    <ThemeProvider>
+      <AuthProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="auth" options={{ headerShown: false }} />
+        </Stack>
+      </AuthProvider>
       <StatusBar style="auto" />
-    </>
+    </ThemeProvider>
   );
 }

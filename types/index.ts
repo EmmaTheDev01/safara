@@ -16,17 +16,14 @@ export type SafetyZone = {
   updatedAt: string;
 };
 
-export type SafetyReview = {
+export interface SafetyReview {
   id: string;
-  zoneId: string;
-  userId: string;
+  username: string;
+  userAvatar?: string;
+  text: string;
   rating: number;
-  comment: string;
-  isLocalGuide: boolean;
   createdAt: string;
-  helpful: number;
-  images?: string[];
-};
+}
 
 export type WeatherInfo = {
   condition: string;
