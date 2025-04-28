@@ -1,10 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
   Dimensions,
   Platform,
   SafeAreaView,
@@ -188,7 +188,7 @@ export default function HomeScreen() {
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
   }, []);
-
+  
   const handleEmergency = () => {
     alert('In a real app, this would connect to emergency services.');
   };
@@ -243,9 +243,9 @@ export default function HomeScreen() {
     (zone) => zone.safetyLevel === 'unsafe'
   );
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
       backgroundColor: colors.background,
     },
     headerContainer: {
@@ -265,142 +265,142 @@ export default function HomeScreen() {
     contentContainer: {
       paddingTop: 0,
       paddingBottom: 80,
-    },
-    mapContainer: {
-      height: 200,
+  },
+  mapContainer: {
+    height: 200,
       marginHorizontal: 15,
       borderRadius: 12,
-      overflow: 'hidden',
+    overflow: 'hidden',
       backgroundColor: colors.card,
-    },
-    expandMapButton: {
-      position: 'absolute',
-      bottom: 12,
-      right: 12,
+  },
+  expandMapButton: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
       backgroundColor: colors.card,
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
-      flexDirection: 'row',
-      alignItems: 'center',
-      ...Platform.select({
-        ios: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
           shadowColor: colors.text,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        },
-        android: {
-          elevation: 3,
-        },
-        web: {
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
           shadowColor: colors.text,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        },
-      }),
-    },
-    expandMapText: {
-      fontFamily: 'Inter-Medium',
-      fontSize: 14,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
+  },
+  expandMapText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 14,
       color: colors.primary,
-      marginLeft: 8,
-    },
-    alertContainer: {
-      paddingHorizontal: 20,
-      marginBottom: 20,
-    },
-    alertWarning: {
-      backgroundColor: '#ef4444',
-      padding: 16,
-      borderRadius: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    alertSafe: {
-      backgroundColor: '#10b981',
-      padding: 16,
-      borderRadius: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    alertTextContainer: {
-      flex: 1,
-      marginLeft: 12,
-    },
-    alertTitle: {
-      fontFamily: 'Inter-Bold',
-      fontSize: 16,
-      color: '#fff',
-      marginBottom: 4,
-    },
-    alertText: {
-      fontFamily: 'Inter-Regular',
-      fontSize: 14,
-      color: '#fff',
-    },
-    emergencyContainer: {
+    marginLeft: 8,
+  },
+  alertContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  alertWarning: {
+    backgroundColor: '#ef4444',
+    padding: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  alertSafe: {
+    backgroundColor: '#10b981',
+    padding: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  alertTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  alertTitle: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 16,
+    color: '#fff',
+    marginBottom: 4,
+  },
+  alertText: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 14,
+    color: '#fff',
+  },
+  emergencyContainer: {
       padding: 20,
-    },
-    quickActionsContainer: {
-      padding: 20,
-    },
-    quickActionsGrid: {
-      flexDirection: 'row',
-      marginTop: 12,
-      gap: 12,
-    },
-    quickActionButton: {
-      flex: 1,
+  },
+  quickActionsContainer: {
+    padding: 20,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    marginTop: 12,
+    gap: 12,
+  },
+  quickActionButton: {
+    flex: 1,
       backgroundColor: colors.card,
-      padding: 16,
-      borderRadius: 12,
-      alignItems: 'center',
-      ...Platform.select({
-        ios: {
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
           shadowColor: colors.text,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        },
-        android: {
-          elevation: 2,
-        },
-        web: {
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
           shadowColor: colors.text,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        },
-      }),
-    },
-    quickActionText: {
-      fontFamily: 'Inter-Medium',
-      fontSize: 14,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
+  },
+  quickActionText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 14,
       color: colors.text,
-      marginTop: 8,
-    },
-    quickActionDetail: {
-      fontFamily: 'Inter-Regular',
-      fontSize: 12,
+    marginTop: 8,
+  },
+  quickActionDetail: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 12,
       color: colors.textSecondary,
-      marginTop: 4,
-    },
+    marginTop: 4,
+  },
     sectionTitle: {
       fontFamily: 'Inter-Bold',
       fontSize: 18,
       color: colors.text,
       marginBottom: 12,
-    },
-    sectionHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
       marginBottom: 12,
-    },
-    seeAllLink: {
-      fontFamily: 'Inter-Medium',
-      fontSize: 14,
+  },
+  seeAllLink: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 14,
       color: colors.primary,
       marginLeft: 'auto',
     },
@@ -455,8 +455,8 @@ export default function HomeScreen() {
     },
     emergencyButton: {
       backgroundColor: colors.primary,
-      padding: 16,
-      borderRadius: 12,
+    padding: 16,
+    borderRadius: 12,
       alignItems: 'center',
       marginTop: 20,
     },
@@ -509,28 +509,28 @@ export default function HomeScreen() {
       paddingBottom: 32,
     },
     reviewItem: {
-      backgroundColor: '#fff',
+    backgroundColor: '#fff',
       borderRadius: 12,
       padding: 16,
       marginBottom: 16,
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        },
-        android: {
-          elevation: 2,
-        },
-        web: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        },
-      }),
-    },
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
+  },
     reviewHeader: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -596,25 +596,25 @@ export default function HomeScreen() {
       marginBottom: 20,
       marginTop: 60,
     },
-    safeZone: {
-      borderLeftWidth: 4,
-      borderLeftColor: '#10b981',
-    },
-    moderateZone: {
-      borderLeftWidth: 4,
-      borderLeftColor: '#f59e0b',
-    },
-    unsafeZone: {
-      borderLeftWidth: 4,
-      borderLeftColor: '#ef4444',
-    },
+  safeZone: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#10b981',
+  },
+  moderateZone: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b',
+  },
+  unsafeZone: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#ef4444',
+  },
     storyModalAvatar: {
       width: 40,
       height: 40,
       borderRadius: 20,
       marginRight: 12,
-    },
-  });
+  },
+});
 
   return (
     <View style={styles.container}>
