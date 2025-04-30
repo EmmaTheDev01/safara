@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
   TouchableOpacity,
   TextInput,
   ScrollView,
@@ -11,19 +11,20 @@ import {
 import { Filter, Search } from 'lucide-react-native';
 import { usePhrasebook } from '@/hooks/usePhrasebook';
 import { PhraseCard } from '@/components/PhraseCard';
-
+import { useTheme } from '@/context/ThemeContext';
 export default function TranslatorScreen() {
-  const { 
-    phrases, 
-    isLoading, 
-    selectedLanguage, 
-    setSelectedLanguage, 
-    supportedLanguages 
+  const {
+    phrases,
+    isLoading,
+    selectedLanguage,
+    setSelectedLanguage,
+    supportedLanguages,
   } = usePhrasebook();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  
+  const { colors } = useTheme();
+
   const categories = [
     { value: null, label: 'All' },
     { value: 'emergency', label: 'Emergency' },
@@ -34,18 +35,22 @@ export default function TranslatorScreen() {
   ];
 
   // Filter phrases by search query and category
-  const filteredPhrases = phrases.filter(phrase => {
-    const matchesQuery = phrase.english.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === null || phrase.category === selectedCategory;
+  const filteredPhrases = phrases.filter((phrase) => {
+    const matchesQuery = phrase.english
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      selectedCategory === null || phrase.category === selectedCategory;
     return matchesQuery && matchesCategory;
   });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Essential Phrases</Text>
         <Text style={styles.subtitle}>
-          Use these phrases for quick communication in emergency situations or while navigating.
+          Use these phrases for quick communication in emergency situations or
+          while navigating.
         </Text>
       </View>
 
@@ -73,10 +78,11 @@ export default function TranslatorScreen() {
               ]}
               onPress={() => setSelectedLanguage(language.code)}
             >
-              <Text 
+              <Text
                 style={[
                   styles.languageButtonText,
-                  selectedLanguage === language.code && styles.selectedLanguageText,
+                  selectedLanguage === language.code &&
+                    styles.selectedLanguageText,
                 ]}
               >
                 {language.name}
@@ -97,10 +103,11 @@ export default function TranslatorScreen() {
               ]}
               onPress={() => setSelectedCategory(category.value)}
             >
-              <Text 
+              <Text
                 style={[
                   styles.categoryButtonText,
-                  selectedCategory === category.value && styles.selectedCategoryText,
+                  selectedCategory === category.value &&
+                    styles.selectedCategoryText,
                 ]}
               >
                 {category.label}
@@ -116,7 +123,9 @@ export default function TranslatorScreen() {
         </View>
       ) : filteredPhrases.length === 0 ? (
         <View style={styles.noResultsContainer}>
-          <Text style={styles.noResultsText}>No phrases found. Try a different search term.</Text>
+          <Text style={styles.noResultsText}>
+            No phrases found. Try a different search term.
+          </Text>
         </View>
       ) : (
         <FlatList

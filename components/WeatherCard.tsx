@@ -9,13 +9,14 @@ import {
   CloudFog 
 } from 'lucide-react-native';
 import { WeatherInfo } from '@/types';
-
+import { useTheme } from '@/context/ThemeContext';
 interface WeatherCardProps {
   weather: WeatherInfo | null;
   isLoading: boolean;
 }
 
 export function WeatherCard({ weather, isLoading }: WeatherCardProps) {
+  const {colors} = useTheme();
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -52,7 +53,7 @@ export function WeatherCard({ weather, isLoading }: WeatherCardProps) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.currentWeather}>
         <View style={styles.weatherIcon}>
           {renderWeatherIcon(weather.icon)}

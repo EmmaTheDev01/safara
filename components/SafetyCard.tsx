@@ -1,15 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafetyZone } from '@/types';
-
+import { useTheme } from '@/context/ThemeContext';
+import { colors } from '@/theme/colors';
 interface SafetyCardProps {
   zone: SafetyZone;
   onClose: () => void;
 }
 
 export default function SafetyCard({ zone, onClose }: SafetyCardProps) {
+  const {colors} = useTheme()
   return (
-    <View style={styles.safetyCardContainer}>
+    <View style={[styles.safetyCardContainer, { backgroundColor: colors.background }]}>
       <View style={styles.safetyCard}>
         <Text style={styles.safetyCardTitle}>{zone.name}</Text>
         <Text style={styles.safetyCardDescription}>{zone.description}</Text>
@@ -58,6 +60,7 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     zIndex: 2,
+   
   },
   safetyCard: {
     backgroundColor: '#fff',

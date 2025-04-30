@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 15,
     width: 70,
+    paddingLeft:10,
   },
   storyRing: {
     width: 60,

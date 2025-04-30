@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Volume2, Copy } from 'lucide-react-native';
 import { TranslationPhrase } from '@/types';
-
+import { useTheme } from '@/context/ThemeContext';
 interface PhraseCardProps {
   phrase: TranslationPhrase;
   language: string;
@@ -10,6 +10,7 @@ interface PhraseCardProps {
 
 export function PhraseCard({ phrase, language }: PhraseCardProps) {
   const [copied, setCopied] = useState(false);
+  const { colors } = useTheme();
 
   const handleCopy = () => {
     // In a real app, we would use Clipboard.setString
@@ -39,12 +40,12 @@ export function PhraseCard({ phrase, language }: PhraseCardProps) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <View 
+        <View
           style={[
-            styles.categoryBadge, 
-            { backgroundColor: getBadgeColor(phrase.category) }
+            styles.categoryBadge,
+            { backgroundColor: getBadgeColor(phrase.category) },
           ]}
         >
           <Text style={styles.categoryText}>
@@ -52,31 +53,23 @@ export function PhraseCard({ phrase, language }: PhraseCardProps) {
           </Text>
         </View>
       </View>
-      
+
       <View style={styles.content}>
         <Text style={styles.englishPhrase}>{phrase.english}</Text>
         <Text style={styles.translatedPhrase}>
           {phrase.translations[language] || 'Translation not available'}
         </Text>
       </View>
-      
+
       <View style={styles.actions}>
-        <TouchableOpacity 
-          style={styles.actionButton} 
-          onPress={handleSpeak}
-        >
+        <TouchableOpacity style={styles.actionButton} onPress={handleSpeak}>
           <Volume2 size={20} color="#3498db" />
           <Text style={styles.actionText}>Speak</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.actionButton} 
-          onPress={handleCopy}
-        >
+
+        <TouchableOpacity style={styles.actionButton} onPress={handleCopy}>
           <Copy size={20} color="#7f8c8d" />
-          <Text style={styles.actionText}>
-            {copied ? 'Copied!' : 'Copy'}
-          </Text>
+          <Text style={styles.actionText}>{copied ? 'Copied!' : 'Copy'}</Text>
         </TouchableOpacity>
       </View>
     </View>

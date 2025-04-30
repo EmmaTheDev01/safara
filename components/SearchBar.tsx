@@ -7,13 +7,25 @@ interface SearchBarProps {
   placeholder?: string;
   value: string;
   onChangeText: (text: string) => void;
+  floating?: boolean;
 }
 
-export function SearchBar({ placeholder = "Search...", value, onChangeText }: SearchBarProps) {
+export function SearchBar({ 
+  placeholder = "Search...",
+  value,
+  onChangeText,
+  floating = false
+}: SearchBarProps) {
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.card }]}>
+    <View
+      style={[
+        styles.container,
+        floating && styles.floating,
+        { backgroundColor: colors.card }
+      ]}
+    >
       <Search size={20} color={colors.textSecondary} style={styles.icon} />
       <TextInput
         style={[styles.input, { color: colors.text }]}
@@ -33,7 +45,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    width: 200,
+    width: '90%',
+    alignSelf: 'center',
+  },
+  floating: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    zIndex: 10,
   },
   icon: {
     marginRight: 8,
@@ -43,4 +63,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-Regular',
   },
-}); 
+});

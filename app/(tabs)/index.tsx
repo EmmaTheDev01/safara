@@ -1,16 +1,19 @@
-import React, { useState, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import React, { useState, useCallback, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   Dimensions,
   Platform,
   SafeAreaView,
   Modal,
   Image,
   StatusBar,
+  TextInput,
+  FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { Link } from 'expo-router';
 import {
@@ -25,6 +28,15 @@ import {
   Star,
   ThumbsUp,
   MessageCircle,
+  Search,
+  ChevronRight,
+  DollarSign,
+  Globe,
+  Phone,
+  Clock,
+  Heart,
+  Mail,
+  User,
 } from 'lucide-react-native';
 import { CustomHeader } from '@/components/CustomHeader';
 import { SafetyMapView } from '@/components/SafetyMapView';
@@ -37,6 +49,11 @@ import { useSafetyZones } from '@/hooks/useSafetyZones';
 import { useWeather } from '@/hooks/useWeather';
 import { EmergencyButton } from '@/components/EmergencyButton';
 import { Video, ResizeMode } from 'expo-av';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { router } from 'expo-router';
+import { CreateContent } from '@/components/CreateContent';
+import { NearbyPlaces } from '@/components/NearbyPlaces';
 
 const { width, height } = Dimensions.get('window');
 const BOTTOM_TAB_HEIGHT = 80;
@@ -55,7 +72,8 @@ const dummyStories = [
   {
     id: '2',
     username: 'niyonsaba_marie', // Another common Rwandan name
-    imageUrl: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/548611537.jpg?k=1006c1484f0fd65395e611a70101aa4b43b9922eccde18e595f40efb39b45265&o=&hp=1',
+    imageUrl:
+      'https://cf.bstatic.com/xdata/images/hotel/max1024x768/548611537.jpg?k=1006c1484f0fd65395e611a70101aa4b43b9922eccde18e595f40efb39b45265&o=&hp=1',
     hasUnseenStory: true,
     mediaUrl:
       'https://cf.bstatic.com/xdata/images/hotel/max1024x768/548611537.jpg?k=1006c1484f0fd65395e611a70101aa4b43b9922eccde18e595f40efb39b45265&o=&hp=1',
@@ -66,8 +84,7 @@ const dummyStories = [
     username: 'mugenzi_jean', // Common Rwandan name
     imageUrl: 'https://ichef.bbci.co.uk/images/ic/480xn/p07y6m73.jpg.webp',
     hasUnseenStory: true,
-    mediaUrl:
-      'https://ichef.bbci.co.uk/images/ic/480xn/p07y6m73.jpg.webp',
+    mediaUrl: 'https://ichef.bbci.co.uk/images/ic/480xn/p07y6m73.jpg.webp',
     mediaType: 'image',
   },
   {
@@ -135,6 +152,67 @@ const dummyStories = [
   },
 ];
 
+// Dummy data for Safety Zones
+const dummyZones = [
+  {
+    id: '1',
+    name: 'Kigali Heights',
+    description: 'A modern and vibrant area in Kigali known for its excellent infrastructure and peaceful surroundings.',
+    safetyLevel: 'safe',
+  },
+  {
+    id: '2',
+    name: 'Nyamirambo',
+    description: 'A lively and bustling neighborhood with a rich culture, but be cautious at night as it can be a little unsafe.',
+    safetyLevel: 'moderate',
+  },
+  {
+    id: '3',
+    name: 'Gisenyi',
+    description: 'A lakeside city located on the shores of Lake Kivu, known for its tranquility and scenic beauty.',
+    safetyLevel: 'safe',
+  },
+  {
+    id: '4',
+    name: 'Rubavu',
+    description: 'A small town situated on Lake Kivu with serene views, perfect for relaxing holidays and nature walks.',
+    safetyLevel: 'safe',
+  },
+  {
+    id: '5',
+    name: 'Kibuye',
+    description: 'A scenic area offering great views of Lake Kivu. It has a moderate safety level, especially at night.',
+    safetyLevel: 'moderate',
+  },
+];
+
+const reviews = [
+  {
+    id: '1',
+    username: 'Munyaneza',
+    userAvatar: 'https://randomuser.me/api/portraits/women/1.jpg',
+    createdAt: '2025-04-29T10:00:00Z',
+    text: 'Great area to live, very safe and peaceful.',
+    rating: 5,
+  },
+  {
+    id: '2',
+    username: 'nshimiyimana_paul',
+    userAvatar: 'https://randomuser.me/api/portraits/men/2.jpg',
+    createdAt: '2025-04-28T14:30:00Z',
+    text: 'Moderately safe, some areas could be improved.',
+    rating: 3,
+  },
+  {
+    id: '3',
+    username: 'Bimenyimana Jeanne',
+    userAvatar: 'https://randomuser.me/api/portraits/men/3.jpg',
+    createdAt: '2025-04-27T08:15:00Z',
+    text: 'Unsafe at night but fine during the day.',
+    rating: 2,
+  },
+];
+
 // Add dummy reviews data at the top of the file with other dummy data
 const dummyReviews = [
   {
@@ -174,6 +252,27 @@ const dummyReviews = [
   },
 ];
 
+interface Country {
+  id: string;
+  name: string;
+  flag: string;
+  currency: string;
+  currencySymbol: string;
+  languages: string[];
+  emergencyNumbers: {
+    police: string;
+    ambulance: string;
+    fire: string;
+  };
+}
+
+interface HistoryItem {
+  id: string;
+  date: string;
+  event: string;
+  location: string;
+}
+
 export default function HomeScreen() {
   const { colors } = useTheme();
   const { location } = useLocation();
@@ -184,11 +283,16 @@ export default function HomeScreen() {
   const [selectedStory, setSelectedStory] = useState<any>(null);
   const [isStoryModalVisible, setIsStoryModalVisible] = useState(false);
   const [videoRef, setVideoRef] = useState<any>(null);
+  const { user, selectedCountry, countries, setSelectedCountry } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [countryHistory, setCountryHistory] = useState<HistoryItem[]>([]);
+  const [showCreateContent, setShowCreateContent] = useState(false);
+  const [contentType, setContentType] = useState<'story' | 'post'>('story');
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
   }, []);
-  
+
   const handleEmergency = () => {
     alert('In a real app, this would connect to emergency services.');
   };
@@ -243,10 +347,210 @@ export default function HomeScreen() {
     (zone) => zone.safetyLevel === 'unsafe'
   );
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-      backgroundColor: colors.background,
+  useEffect(() => {
+    if (selectedCountry) {
+      fetchCountryData();
+    }
+  }, [selectedCountry]);
+
+  const fetchCountryData = async () => {
+    try {
+      setIsLoading(true);
+
+      // In a real app, these would be API calls to fetch data
+      // For now, we'll use the dummy data
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Set the data
+      // setSafetyZones(dummySafetyZones);
+      // setReviews(dummyReviews);
+      // setStories(dummyStories);
+
+      // Set country history (in a real app, this would come from an API)
+      setCountryHistory([
+        {
+          id: '1',
+          date: '2023-05-15',
+          event: 'Visited Kigali',
+          location: 'Kigali, Rwanda',
+        },
+        {
+          id: '2',
+          date: '2023-05-10',
+          event: 'Explored Nyamata Genocide Memorial',
+          location: 'Nyamata, Rwanda',
+        },
+        {
+          id: '3',
+          date: '2023-05-05',
+          event: 'Tried local cuisine',
+          location: 'Kigali, Rwanda',
+        },
+      ]);
+    } catch (error) {
+      console.error('Error fetching country data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const renderCountryInfo = () => {
+    if (!selectedCountry) {
+      return (
+        <View style={styles.countrySelector}>
+          <Text style={[styles.countrySelectorTitle, { color: colors.text }]}>
+            Select a Country
+          </Text>
+          <FlatList
+            data={countries}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.countryItem, { backgroundColor: colors.card }]}
+                onPress={() => setSelectedCountry(item)}
+              >
+                <Text style={[styles.countryFlag, { fontSize: 24 }]}>
+                  {item.flag}
+                </Text>
+                <Text style={[styles.countryName, { color: colors.text }]}>
+                  {item.name}
+                </Text>
+                <ChevronRight size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.countryInfo}>
+        <View style={styles.countryHeader}>
+          <Text style={[styles.countryFlag, { fontSize: 32 }]}>
+            {selectedCountry.flag}
+          </Text>
+          <Text
+            style={[styles.countryName, { color: colors.text, fontSize: 24 }]}
+          >
+            {selectedCountry.name}
+          </Text>
+        </View>
+
+        <View style={styles.countryDetails}>
+          <View style={styles.countryDetailItem}>
+            <DollarSign size={20} color={colors.primary} />
+            <Text style={[styles.countryDetailText, { color: colors.text }]}>
+              {selectedCountry.currency} ({selectedCountry.currencySymbol})
+            </Text>
+          </View>
+
+          <View style={styles.countryDetailItem}>
+            <Globe size={20} color={colors.primary} />
+            <Text style={[styles.countryDetailText, { color: colors.text }]}>
+              Languages: {selectedCountry.languages.join(',')}
+            </Text>
+          </View>
+
+          <View style={styles.countryDetailItem}>
+            <Phone size={20} color={colors.primary} />
+            <Text style={[styles.countryDetailText, { color: colors.text }]}>
+              Emergency: {selectedCountry.emergencyNumbers.police}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.emergencyInfo}>
+          <AlertTriangle size={20} color={colors.primary} />
+          <Text style={[styles.emergencyInfoText, { color: colors.text }]}>
+            Emergency Numbers:
+          </Text>
+          <Text style={[styles.emergencyInfoText, { color: colors.text }]}>
+            Police: {selectedCountry.emergencyNumbers.police}
+          </Text>
+          <Text style={[styles.emergencyInfoText, { color: colors.text }]}>
+            Ambulance: {selectedCountry.emergencyNumbers.ambulance}
+          </Text>
+          <Text style={[styles.emergencyInfoText, { color: colors.text }]}>
+            Fire: {selectedCountry.emergencyNumbers.fire}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  const renderCountryHistory = () => {
+    if (!selectedCountry || countryHistory.length === 0) return null;
+
+    return (
+      <View style={styles.historySection}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          Your History in {selectedCountry.name}
+        </Text>
+        <FlatList
+          data={countryHistory}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View
+              style={[styles.historyItem, { backgroundColor: colors.card }]}
+            >
+              <Clock size={20} color={colors.primary} />
+              <View style={styles.historyItemContent}>
+                <Text
+                  style={[
+                    styles.historyItemDate,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {item.date}
+                </Text>
+                <Text style={[styles.historyItemEvent, { color: colors.text }]}>
+                  {item.event}
+                </Text>
+                <Text
+                  style={[
+                    styles.historyItemLocation,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {item.location}
+                </Text>
+              </View>
+            </View>
+          )}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        />
+      </View>
+    );
+  };
+
+  const handleCreateContent = (type: 'story' | 'post') => {
+    setContentType(type);
+    setShowCreateContent(true);
+  };
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#fff',
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingTop: 60,
+      paddingBottom: 16,
+      backgroundColor: '#fff',
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: 'bold',
+    },
+    content: {
+      flex: 1,
     },
     headerContainer: {
       position: 'absolute',
@@ -258,149 +562,155 @@ const styles = StyleSheet.create({
       paddingTop: Platform.OS === 'ios' ? 50 : 20,
       paddingBottom: 10,
     },
-    content: {
-      flex: 1,
-      marginTop: 60,
-    },
     contentContainer: {
       paddingTop: 0,
       paddingBottom: 80,
-  },
-  mapContainer: {
-    height: 200,
+    },
+    mapContainer: {
+      height: 200,
       marginHorizontal: 15,
       borderRadius: 12,
-    overflow: 'hidden',
+      overflow: 'hidden',
       backgroundColor: colors.card,
-  },
-  expandMapButton: {
-    position: 'absolute',
-    bottom: 12,
-    right: 12,
+    },
+    expandMapButton: {
+      position: 'absolute',
+      bottom: 12,
+      right: 12,
       backgroundColor: colors.card,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      ...Platform.select({
+        ios: {
           shadowColor: colors.text,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-      web: {
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        },
+        android: {
+          elevation: 3,
+        },
+        web: {
           shadowColor: colors.text,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-    }),
-  },
-  expandMapText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        },
+      }),
+    },
+    expandMapText: {
+      fontFamily: 'Inter-Medium',
+      fontSize: 14,
       color: colors.primary,
-    marginLeft: 8,
-  },
-  alertContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  alertWarning: {
-    backgroundColor: '#ef4444',
-    padding: 16,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  alertSafe: {
-    backgroundColor: '#10b981',
-    padding: 16,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  alertTextContainer: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  alertTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 16,
-    color: '#fff',
-    marginBottom: 4,
-  },
-  alertText: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 14,
-    color: '#fff',
-  },
-  emergencyContainer: {
+      marginLeft: 8,
+    },
+    alertContainer: {
+      paddingHorizontal: 20,
+      marginBottom: 20,
+    },
+    alertWarning: {
+      backgroundColor: '#ef4444',
+      padding: 16,
+      borderRadius: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    alertSafe: {
+      backgroundColor: '#10b981',
+      padding: 16,
+      borderRadius: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    alertTextContainer: {
+      flex: 1,
+      marginLeft: 12,
+    },
+    alertTitle: {
+      fontFamily: 'Inter-Bold',
+      fontSize: 16,
+      color: '#fff',
+      marginBottom: 4,
+    },
+    alertText: {
+      fontFamily: 'Inter-Regular',
+      fontSize: 14,
+      color: '#fff',
+    },
+    emergencyContainer: {
       padding: 20,
-  },
-  quickActionsContainer: {
-    padding: 20,
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    marginTop: 12,
-    gap: 12,
-  },
-  quickActionButton: {
-    flex: 1,
+    },
+    quickActionsContainer: {
+      padding: 20,
+    },
+    quickActionsGrid: {
+      flexDirection: 'row',
+      marginTop: 12,
+      gap: 12,
+    },
+    quickActionButton: {
+      flex: 1,
       backgroundColor: colors.card,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
+      padding: 16,
+      borderRadius: 12,
+      alignItems: 'center',
+      ...Platform.select({
+        ios: {
           shadowColor: colors.text,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-      web: {
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        },
+        android: {
+          elevation: 2,
+        },
+        web: {
           shadowColor: colors.text,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-    }),
-  },
-  quickActionText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        },
+      }),
+    },
+    quickActionText: {
+      fontFamily: 'Inter-Medium',
+      fontSize: 14,
       color: colors.text,
-    marginTop: 8,
-  },
-  quickActionDetail: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 12,
+      marginTop: 8,
+    },
+    quickActionDetail: {
+      fontFamily: 'Inter-Regular',
+      fontSize: 12,
       color: colors.textSecondary,
-    marginTop: 4,
-  },
+      marginTop: 4,
+    },
+    storyTitle: {
+      fontFamily: 'Inter-Bold',
+      fontSize: 18,
+      color: colors.text,
+      marginBottom: 12,
+      paddingLeft: 24,
+      marginTop: 40,
+    },
     sectionTitle: {
       fontFamily: 'Inter-Bold',
       fontSize: 18,
       color: colors.text,
       marginBottom: 12,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+      paddingLeft: 24,
+      marginTop: 10,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
       marginBottom: 12,
-  },
-  seeAllLink: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    },
+    seeAllLink: {
+      fontFamily: 'Inter-Medium',
+      fontSize: 14,
       color: colors.primary,
       marginLeft: 'auto',
     },
@@ -455,8 +765,8 @@ const styles = StyleSheet.create({
     },
     emergencyButton: {
       backgroundColor: colors.primary,
-    padding: 16,
-    borderRadius: 12,
+      padding: 16,
+      borderRadius: 12,
       alignItems: 'center',
       marginTop: 20,
     },
@@ -509,28 +819,28 @@ const styles = StyleSheet.create({
       paddingBottom: 32,
     },
     reviewItem: {
-    backgroundColor: '#fff',
+      backgroundColor: '#fff',
       borderRadius: 12,
       padding: 16,
       marginBottom: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-      web: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-    }),
-  },
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        },
+        android: {
+          elevation: 2,
+        },
+        web: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        },
+      }),
+    },
     reviewHeader: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -596,219 +906,218 @@ const styles = StyleSheet.create({
       marginBottom: 20,
       marginTop: 60,
     },
-  safeZone: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#10b981',
-  },
-  moderateZone: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#f59e0b',
-  },
-  unsafeZone: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#ef4444',
-  },
+    safeZone: {
+      borderLeftWidth: 4,
+      borderLeftColor: '#10b981',
+    },
+    moderateZone: {
+      borderLeftWidth: 4,
+      borderLeftColor: '#f59e0b',
+    },
+    unsafeZone: {
+      borderLeftWidth: 4,
+      borderLeftColor: '#ef4444',
+    },
     storyModalAvatar: {
       width: 40,
       height: 40,
       borderRadius: 20,
       marginRight: 12,
-  },
-});
+    },
+    countrySelector: {
+      padding: 16,
+    },
+    countrySelectorTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 16,
+    },
+    countryItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderRadius: 8,
+      marginBottom: 8,
+    },
+    countryFlag: {
+      marginRight: 12,
+    },
+    countryName: {
+      flex: 1,
+      fontSize: 16,
+    },
+    countryInfo: {
+      padding: 16,
+    },
+    countryHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    countryDetails: {
+      marginBottom: 16,
+    },
+    countryDetailItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    countryDetailText: {
+      marginLeft: 8,
+      fontSize: 16,
+    },
+    emergencyInfo: {
+      backgroundColor: '#f8f8f8',
+      padding: 16,
+      borderRadius: 8,
+    },
+    emergencyInfoText: {
+      fontSize: 16,
+      marginTop: 8,
+    },
+    historySection: {
+      padding: 16,
+    },
+    historyItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderRadius: 8,
+      marginRight: 16,
+      width: 250,
+    },
+    historyItemContent: {
+      marginLeft: 12,
+      flex: 1,
+    },
+    historyItemDate: {
+      fontSize: 12,
+    },
+    historyItemEvent: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      marginTop: 4,
+    },
+    historyItemLocation: {
+      fontSize: 14,
+      marginTop: 4,
+    },
+    headerButtons: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    createButton: {
+      backgroundColor: '#007AFF',
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+    },
+    postButton: {
+      backgroundColor: '#34C759',
+    },
+    createButtonText: {
+      color: '#fff',
+      fontWeight: '600',
+    },
+    storiesContainer: {
+      marginBottom: 24,
+      paddingHorizontal: 10,
+    },
+    storyItem: {
+      alignItems: 'center',
+      marginRight: 16,
+      width: 80,
+    },
+    storyRing: {
+      width: 70,
+      height: 70,
+      borderRadius: 35,
+      borderWidth: 3,
+      borderColor: '#ff0066', // highlight ring (can be theme.primary)
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    storyImage: {
+      width: 62,
+      height: 62,
+      borderRadius: 31,
+    },
+    storyUsername: {
+      marginTop: 6,
+      fontSize: 12,
+      fontWeight: '600',
+      textAlign: 'center',
+      color: '#333',
+    },
+
+    nearbyContainer: {
+      marginBottom: 24,
+    },
+  });
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Fixed header below status bar */}
-      <View style={styles.headerContainer}>
-        <CustomHeader
-          searchPlaceholder="Search locations..."
-          onSearch={handleSearch}
+      {showCreateContent ? (
+        <CreateContent
+          type={contentType}
+          onClose={() => setShowCreateContent(false)}
         />
-      </View>
-
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.section}>
-          <StoriesSection
-            stories={dummyStories}
-            onStoryPress={handleStoryPress}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.mapContainer}>
-            <SafetyMapView
-              location={location}
-              safetyZones={safetyZones}
-              isLoading={false}
-              onSelectZone={setSelectedZone}
-            />
-            <Link href="/map" asChild>
-              <TouchableOpacity style={styles.expandMapButton}>
-                <Navigation size={20} color="#6366f1" />
-                <Text style={styles.expandMapText}>Open Full Map</Text>
+      ) : (
+        <>
+          {/* <View style={styles.header}>
+            <Text style={styles.title}>Safara</Text>
+            <View style={styles.headerButtons}>
+              <TouchableOpacity
+                style={styles.createButton}
+                onPress={() => handleCreateContent('story')}
+              >
+                <Text style={styles.createButtonText}>Create Story</Text>
               </TouchableOpacity>
-            </Link>
-          </View>
-        </View>
-
-        {selectedZone && (
-          <View style={styles.section}>
-            <ReviewsSection zone={selectedZone} />
-          </View>
-        )}
-
-        <View style={styles.alertContainer}>
-          {hasUnsafeZones ? (
-            <View style={styles.alertWarning}>
-              <AlertTriangle size={24} color="#fff" />
-              <View style={styles.alertTextContainer}>
-                <Text style={styles.alertTitle}>Safety Alert</Text>
-                <Text style={styles.alertText}>
-                  Exercise caution in marked areas. Check the map for details.
-                </Text>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.alertSafe}>
-              <Shield size={24} color="#fff" />
-              <View style={styles.alertTextContainer}>
-                <Text style={styles.alertTitle}>Safe Area</Text>
-                <Text style={styles.alertText}>
-                  Current location is considered safe for travelers.
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.quickActionsContainer}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.quickActionsGrid}>
-            <Link href="/weather" asChild>
-              <TouchableOpacity style={styles.quickActionButton}>
-                <Cloud size={24} color="#6366f1" />
-                <Text style={styles.quickActionText}>Weather</Text>
-                {weather && (
-                  <Text style={styles.quickActionDetail}>
-                    {weather.temperature}°F
-                  </Text>
-                )}
+              <TouchableOpacity
+                style={[styles.createButton, styles.postButton]}
+                onPress={() => handleCreateContent('post')}
+              >
+                <Text style={styles.createButtonText}>Create Post</Text>
               </TouchableOpacity>
-            </Link>
-            <Link href="/translator" asChild>
-              <TouchableOpacity style={styles.quickActionButton}>
-                <Languages size={24} color="#6366f1" />
-                <Text style={styles.quickActionText}>Translator</Text>
-                <Text style={styles.quickActionDetail}>15 phrases</Text>
-              </TouchableOpacity>
-            </Link>
           </View>
-        </View>
+        </View> */}
 
-        <View style={styles.safetyZonesContainer}>
-          <View style={styles.sectionHeader}>
-            <MapPin size={20} color="#6366f1" />
-            <Text style={styles.sectionTitle}>Nearby Safety Zones</Text>
-            <Link href="/map" asChild>
-              <TouchableOpacity>
-                <Text style={styles.seeAllLink}>View All</Text>
-              </TouchableOpacity>
-            </Link>
-          </View>
-          {nearestSafetyZones.map((zone) => (
+          <ScrollView
+            style={[styles.content, { backgroundColor: colors.background }]}
+          >
             <View
-              key={zone.id}
-              style={[
-                styles.safetyZoneCard,
-                zone.safetyLevel === 'safe'
-                  ? styles.safeZone
-                  : zone.safetyLevel === 'moderate'
-                  ? styles.moderateZone
-                  : styles.unsafeZone,
-              ]}
+              style={[styles.container, { backgroundColor: colors.background }]}
             >
-              <Text style={styles.safetyZoneTitle}>{zone.name}</Text>
-              <Text style={styles.safetyZoneDescription}>{zone.description}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Reviews Section */}
-        <View style={styles.reviewsContainer}>
-          <View style={styles.sectionHeader}>
-            <FileText size={20} color="#6366f1" />
-            <Text style={styles.sectionTitle}>Recent Reviews</Text>
-            <Link href="/insights" asChild>
-              <TouchableOpacity>
-                <Text style={styles.seeAllLink}>View All</Text>
-              </TouchableOpacity>
-            </Link>
-          </View>
-          
-          {dummyReviews.map((review) => (
-            <View key={review.id} style={styles.reviewItem}>
-              <View style={styles.reviewHeader}>
-                <Image 
-                  source={{ uri: review.userAvatar || 'https://via.placeholder.com/40' }} 
-                  style={styles.reviewAvatar} 
+              <Text style={styles.storyTitle}>Stories</Text>
+              <View style={{ marginBottom: 24 }}>
+                <StoriesSection
+                  stories={dummyStories}
+                  onStoryPress={handleStoryPress}
                 />
-                <View style={styles.reviewUserInfo}>
-                  <Text style={styles.reviewUsername}>{review.username}</Text>
-                  <Text style={styles.reviewDate}>{review.createdAt}</Text>
-                </View>
-                <View style={styles.reviewRating}>
-                  {[...Array(5)].map((_, i) => (
-                    <Star 
-                      key={i} 
-                      size={16} 
-                      color={i < review.rating ? '#f59e0b' : '#e2e8f0'} 
-                      fill={i < review.rating ? '#f59e0b' : 'none'} 
-                    />
-                  ))}
-                </View>
-              </View>
-              <Text style={styles.reviewText}>{review.text}</Text>
-              {review.images && review.images.length > 0 && (
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.reviewImagesContainer}
-                >
-                  {review.images.map((image, index) => (
-                    <Image 
-                      key={index} 
-                      source={{ uri: image }} 
-                      style={styles.reviewImage} 
-                    />
-                  ))}
-                </ScrollView>
-              )}
-              <View style={styles.reviewFooter}>
-                <TouchableOpacity style={styles.reviewAction}>
-                  <ThumbsUp size={16} color="#64748b" />
-                  <Text style={styles.reviewActionText}>{review.helpful}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.reviewAction}>
-                  <MessageCircle size={16} color="#64748b" />
-                  <Text style={styles.reviewActionText}>Reply</Text>
-                </TouchableOpacity>
               </View>
             </View>
-          ))}
-        </View>
 
-        <View style={styles.section}>
-          <View style={styles.emergencyContainer}>
-            <EmergencyButton onPress={handleEmergency} />
-          </View>
-        </View>
-      </ScrollView>
+            <View style={styles.nearbyContainer}>
+              <Text style={styles.sectionTitle}>Nearby Places</Text>
+              <NearbyPlaces />
+            </View>
+
+            {renderCountryInfo()}
+            {renderCountryHistory()}
+            
+
+
+            <View style={styles.nearbyContainer}>
+              <Text style={styles.sectionTitle}>User Reviews</Text>
+              <ReviewsSection zone={{ reviews }} />
+            </View>
+          </ScrollView>
+
+          {/* <EmergencyButton onPress={handleEmergency} /> */}
+        </>
+      )}
 
       {/* Story Modal */}
       <Modal

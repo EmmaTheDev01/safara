@@ -9,10 +9,10 @@ import {
 } from 'react-native';
 import { useInsights } from '@/hooks/useInsights';
 import { InsightCard } from '@/components/InsightCard';
-
+import { useTheme } from '@/context/ThemeContext';
 export default function InsightsScreen() {
   const { insights, isLoading } = useInsights();
-  
+  const {colors} = useTheme();
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   
   const categories = [
@@ -38,7 +38,7 @@ export default function InsightsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Local Safety Insights</Text>
         <Text style={styles.subtitle}>

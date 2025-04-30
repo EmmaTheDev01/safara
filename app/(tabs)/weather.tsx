@@ -3,13 +3,13 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useLocation } from '@/hooks/useLocation';
 import { useWeather } from '@/hooks/useWeather';
 import { WeatherCard } from '@/components/WeatherCard';
-
+import { useTheme } from '@/context/ThemeContext';
 export default function WeatherScreen() {
   const { location } = useLocation();
   const { weather, isLoading, error } = useWeather(location.latitude, location.longitude);
-
+  const {colors} = useTheme();
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Weather Forecast</Text>
         <Text style={styles.subtitle}>
@@ -18,7 +18,7 @@ export default function WeatherScreen() {
         </Text>
       </View>
       
-      <WeatherCard 
+      <WeatherCard  
         weather={weather}
         isLoading={isLoading}
       />
@@ -29,7 +29,7 @@ export default function WeatherScreen() {
         </View>
       )}
       
-      <View style={styles.tipsContainer}>
+      <View style={[styles.tipsContainer, { backgroundColor: colors.background }]}>
         <Text style={styles.tipsTitle}>Weather Safety Tips</Text>
         <View style={styles.tipItem}>
           <Text style={styles.tipHeader}>Hot Weather</Text>

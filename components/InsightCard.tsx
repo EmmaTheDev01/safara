@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
 import { LocalInsight } from '@/types';
-
+import { useTheme } from '@/context/ThemeContext';
 interface InsightCardProps {
   insight: LocalInsight;
   onPress: () => void;
@@ -24,9 +24,9 @@ export function InsightCard({ insight, onPress }: InsightCardProps) {
         return '#7f8c8d';
     }
   };
-
+  const {colors} = useTheme();
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={[styles.container, { backgroundColor: colors.background }]} onPress={onPress} activeOpacity={0.8}>
       {insight.imageUrl && (
         <Image 
           source={{ uri: insight.imageUrl }} 

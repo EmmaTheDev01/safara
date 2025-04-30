@@ -59,9 +59,58 @@ CREATE TABLE IF NOT EXISTS safety_reviews (
   created_at timestamptz DEFAULT now()
 );
 
+-- Create stories table
+CREATE TABLE IF NOT EXISTS stories (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users,
+  media_url text NOT NULL,
+  media_type text NOT NULL CHECK (media_type IN ('image', 'video')),
+  caption text,
+  location_lat double precision,
+  location_lng double precision,
+  safety_level text CHECK (safety_level IN ('safe', 'moderate', 'unsafe')),
+  safety_notes text,
+  created_at timestamptz DEFAULT now(),
+  expires_at timestamptz DEFAULT (now() + interval '24 hours')
+);
+
+-- Create posts table
+CREATE TABLE IF NOT EXISTS posts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users,
+  title text NOT NULL,
+  content text NOT NULL,
+  location_lat double precision,
+  location_lng double precision,
+  category text CHECK (category IN ('safety_alert', 'travel_tip', 'local_news', 'emergency')),
+  safety_level text CHECK (safety_level IN ('safe', 'moderate', 'unsafe')),
+  verified boolean DEFAULT false,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Create nearby_places table
+CREATE TABLE IF NOT EXISTS nearby_places (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  type text CHECK (type IN ('restaurant', 'hotel', 'attraction', 'transport', 'emergency')),
+  location_lat double precision NOT NULL,
+  location_lng double precision NOT NULL,
+  safety_level text CHECK (safety_level IN ('safe', 'moderate', 'unsafe')),
+  safety_notes text,
+  operating_hours text,
+  contact_info text,
+  verified boolean DEFAULT false,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
 -- Enable RLS
 ALTER TABLE safety_zones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE safety_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE nearby_places ENABLE ROW LEVEL SECURITY;
 
 -- Policies for safety zones
 CREATE POLICY "Anyone can read safety zones"
@@ -100,6 +149,57 @@ CREATE POLICY "Users can update their own reviews"
   FOR UPDATE
   TO authenticated
   USING (auth.uid() = user_id);
+
+-- Policies for stories
+CREATE POLICY "Anyone can read stories"
+  ON stories
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "Authenticated users can create stories"
+  ON stories
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+-- Policies for posts
+CREATE POLICY "Anyone can read posts"
+  ON posts
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "Authenticated users can create posts"
+  ON posts
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Users can update their own posts"
+  ON posts
+  FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Policies for nearby_places
+CREATE POLICY "Anyone can read nearby places"
+  ON nearby_places
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "Authenticated users can create nearby places"
+  ON nearby_places
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Users can update nearby places"
+  ON nearby_places
+  FOR UPDATE
+  TO authenticated
+  USING (true);
 
 -- Create function to update zone safety level based on reviews
 CREATE OR REPLACE FUNCTION update_zone_safety_level()
