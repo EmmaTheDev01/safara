@@ -29,7 +29,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   const colors = {
-    primary: '#E11D48',
+    primary: '#00a652',
     background: isDark ? '#1F2937' : '#FFFFFF',
     card: isDark ? '#374151' : '#FFFFFF',
     text: isDark ? '#F9FAFB' : '#1F2937',

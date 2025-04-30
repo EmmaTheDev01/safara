@@ -54,6 +54,10 @@ import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
 import { CreateContent } from '@/components/CreateContent';
 import { NearbyPlaces } from '@/components/NearbyPlaces';
+import { CarRentalList } from '@/components/CarRentalList';
+import CurrencyConverter from '@/components/CurrencyConverter';
+import { TourismCompanyList } from '@/components/TourismCompanies';
+import { SuggestedPlaces } from '@/components/SuggestesPlaces';
 
 const { width, height } = Dimensions.get('window');
 const BOTTOM_TAB_HEIGHT = 80;
@@ -66,7 +70,8 @@ const dummyStories = [
     imageUrl:
       'https://www.newtimes.co.rw/thenewtimes/uploads/images/2023/04/17/thumbs/1200x700/16637.jpg',
     hasUnseenStory: true,
-    mediaUrl: 'https://youtu.be/IpNekyJQ-KI', // Replace with actual video URL
+    mediaUrl:
+      'https://www.newtimes.co.rw/thenewtimes/uploads/images/2023/03/17/thumbs/1200x700/14341.jpg', // Replace with actual video URL
     mediaType: 'video',
   },
   {
@@ -90,64 +95,31 @@ const dummyStories = [
   {
     id: '4',
     username: 'nyiranshuti_angelique', // Another common name
-    imageUrl: 'https://via.placeholder.com/50',
+    imageUrl:
+      'https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcSlDxDPxVSUEydboUbnlI5QFKa3J_SvNgRKxhgwrhRl4P0IR-OKj9CrR7hcL7ZZs2NTUyBaTBIIyPJ5sqsWXVqFHaxWUXMETYp9dU9Clg',
     hasUnseenStory: true,
     mediaUrl:
-      'https://images.pexels.com/photos/2387875/pexels-photo-2387875.jpeg',
+      'https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcSlDxDPxVSUEydboUbnlI5QFKa3J_SvNgRKxhgwrhRl4P0IR-OKj9CrR7hcL7ZZs2NTUyBaTBIIyPJ5sqsWXVqFHaxWUXMETYp9dU9Clg',
     mediaType: 'image',
   },
   {
     id: '5',
     username: 'habimana_david', // Common Rwandan name
-    imageUrl: 'https://via.placeholder.com/50',
+    imageUrl:
+      'https://visitrwanda.com/wp-content/uploads/fly-images/1630/Visit-Rwanda-NH_OO_Lifestyle_Canopy_Walk_0657_MASTER-700x467.jpg',
     hasUnseenStory: true,
     mediaUrl:
-      'https://images.pexels.com/photos/2387877/pexels-photo-2387877.jpeg',
+      'https://visitrwanda.com/wp-content/uploads/fly-images/1630/Visit-Rwanda-NH_OO_Lifestyle_Canopy_Walk_0657_MASTER-700x467.jpg',
     mediaType: 'image',
   },
   {
     id: '6',
     username: 'nyirabagenzi_viviane', // Another common name
-    imageUrl: 'https://via.placeholder.com/50',
+    imageUrl:
+      'https://ugandarwandagorillatours.com/wp-content/uploads/2021/10/Best-time-to-Visit-Rwanda-1.jpg',
     hasUnseenStory: true,
     mediaUrl:
-      'https://images.pexels.com/photos/2387879/pexels-photo-2387879.jpeg',
-    mediaType: 'image',
-  },
-  {
-    id: '7',
-    username: 'bimenyimana_jeanne', // Common name
-    imageUrl: 'https://via.placeholder.com/50',
-    hasUnseenStory: true,
-    mediaUrl:
-      'https://images.pexels.com/photos/2387881/pexels-photo-2387881.jpeg',
-    mediaType: 'image',
-  },
-  {
-    id: '8',
-    username: 'rukundo_eric', // Common Rwandan name
-    imageUrl: 'https://via.placeholder.com/50',
-    hasUnseenStory: true,
-    mediaUrl:
-      'https://images.pexels.com/photos/2387883/pexels-photo-2387883.jpeg',
-    mediaType: 'image',
-  },
-  {
-    id: '9',
-    username: 'ndahiro_diane', // Common name
-    imageUrl: 'https://via.placeholder.com/50',
-    hasUnseenStory: true,
-    mediaUrl:
-      'https://images.pexels.com/photos/2387885/pexels-photo-2387885.jpeg',
-    mediaType: 'image',
-  },
-  {
-    id: '10',
-    username: 'nshimiyimana_paul', // Common Rwandan name
-    imageUrl: 'https://via.placeholder.com/50',
-    hasUnseenStory: true,
-    mediaUrl:
-      'https://images.pexels.com/photos/2387887/pexels-photo-2387887.jpeg',
+      'https://ugandarwandagorillatours.com/wp-content/uploads/2021/10/Best-time-to-Visit-Rwanda-1.jpg',
     mediaType: 'image',
   },
 ];
@@ -157,31 +129,36 @@ const dummyZones = [
   {
     id: '1',
     name: 'Kigali Heights',
-    description: 'A modern and vibrant area in Kigali known for its excellent infrastructure and peaceful surroundings.',
+    description:
+      'A modern and vibrant area in Kigali known for its excellent infrastructure and peaceful surroundings.',
     safetyLevel: 'safe',
   },
   {
     id: '2',
     name: 'Nyamirambo',
-    description: 'A lively and bustling neighborhood with a rich culture, but be cautious at night as it can be a little unsafe.',
+    description:
+      'A lively and bustling neighborhood with a rich culture, but be cautious at night as it can be a little unsafe.',
     safetyLevel: 'moderate',
   },
   {
     id: '3',
     name: 'Gisenyi',
-    description: 'A lakeside city located on the shores of Lake Kivu, known for its tranquility and scenic beauty.',
+    description:
+      'A lakeside city located on the shores of Lake Kivu, known for its tranquility and scenic beauty.',
     safetyLevel: 'safe',
   },
   {
     id: '4',
     name: 'Rubavu',
-    description: 'A small town situated on Lake Kivu with serene views, perfect for relaxing holidays and nature walks.',
+    description:
+      'A small town situated on Lake Kivu with serene views, perfect for relaxing holidays and nature walks.',
     safetyLevel: 'safe',
   },
   {
     id: '5',
     name: 'Kibuye',
-    description: 'A scenic area offering great views of Lake Kivu. It has a moderate safety level, especially at night.',
+    description:
+      'A scenic area offering great views of Lake Kivu. It has a moderate safety level, especially at night.',
     safetyLevel: 'moderate',
   },
 ];
@@ -189,27 +166,35 @@ const dummyZones = [
 const reviews = [
   {
     id: '1',
-    username: 'Munyaneza',
-    userAvatar: 'https://randomuser.me/api/portraits/women/1.jpg',
+    username: 'Munyaneza Claude',
+    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Claude',
     createdAt: '2025-04-29T10:00:00Z',
-    text: 'Great area to live, very safe and peaceful.',
+    text: 'Kacyiru is very secure, especially near the embassy area. I walk freely even in the evenings.',
     rating: 5,
   },
   {
     id: '2',
-    username: 'nshimiyimana_paul',
-    userAvatar: 'https://randomuser.me/api/portraits/men/2.jpg',
+    username: 'Uwimana Aline',
+    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aline',
     createdAt: '2025-04-28T14:30:00Z',
-    text: 'Moderately safe, some areas could be improved.',
+    text: 'Nyamirambo has lively streets but you have to be alert at night, especially in less lit areas.',
     rating: 3,
   },
   {
     id: '3',
-    username: 'Bimenyimana Jeanne',
-    userAvatar: 'https://randomuser.me/api/portraits/men/3.jpg',
+    username: 'Niyonsenga Jean',
+    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jean',
     createdAt: '2025-04-27T08:15:00Z',
-    text: 'Unsafe at night but fine during the day.',
+    text: 'Gikondo can be risky at night — I wouldn’t recommend walking alone after 9 PM.',
     rating: 2,
+  },
+  {
+    id: '4',
+    username: 'Mukamana Chantal',
+    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Chantal',
+    createdAt: '2025-04-26T09:45:00Z',
+    text: 'Remera has improved a lot. The police patrols are frequent, and I feel safe.',
+    rating: 4,
   },
 ];
 
@@ -1033,7 +1018,7 @@ export default function HomeScreen() {
       height: 70,
       borderRadius: 35,
       borderWidth: 3,
-      borderColor: '#ff0066', // highlight ring (can be theme.primary)
+      borderColor: colors.primary, // highlight ring (can be theme.primary)
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -1090,6 +1075,8 @@ export default function HomeScreen() {
             <View
               style={[styles.container, { backgroundColor: colors.background }]}
             >
+              
+
               <Text style={styles.storyTitle}>Stories</Text>
               <View style={{ marginBottom: 24 }}>
                 <StoriesSection
@@ -1098,7 +1085,25 @@ export default function HomeScreen() {
                 />
               </View>
             </View>
+            <View>
+            <Text style={styles.storyTitle}>
+                 Suggestions
+                </Text>
+                <SuggestedPlaces />
+              </View>
+            <View style={styles.section}>
+              <Text style={styles.storyTitle}>Conversion</Text>
+              <CurrencyConverter />
+            </View>
+            <View style={styles.section}>
+              <Text style={styles.storyTitle}>Rentals</Text>
+              <CarRentalList />
+            </View>
 
+            <View style={styles.section}>
+              <Text style={styles.storyTitle}>Tourism</Text>
+              <TourismCompanyList />
+            </View>
             <View style={styles.nearbyContainer}>
               <Text style={styles.sectionTitle}>Nearby Places</Text>
               <NearbyPlaces />
@@ -1106,8 +1111,6 @@ export default function HomeScreen() {
 
             {renderCountryInfo()}
             {renderCountryHistory()}
-            
-
 
             <View style={styles.nearbyContainer}>
               <Text style={styles.sectionTitle}>User Reviews</Text>

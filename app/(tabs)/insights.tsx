@@ -40,7 +40,6 @@ export default function InsightsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Local Safety Insights</Text>
         <Text style={styles.subtitle}>
           Tips and information to help you navigate safely in unfamiliar areas.
         </Text>

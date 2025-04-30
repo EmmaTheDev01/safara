@@ -63,6 +63,7 @@ export function ReviewsSection({ zone }: ReviewsSectionProps) {
 const styles = StyleSheet.create({
   container: {
     paddingVertical: 10,
+    
   },
   title: {
     fontSize: 18,
@@ -86,6 +87,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
+    marginBottom: 10,
   },
   reviewHeader: {
     flexDirection: 'row',

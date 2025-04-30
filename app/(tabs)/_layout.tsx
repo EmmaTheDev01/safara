@@ -23,7 +23,7 @@ export default function TabLayout() {
           tabBarInactiveTintColor: colors.textSecondary,
           tabBarStyle: {
             overflow: 'hidden',
-            bottom: 20,
+            bottom: 0,
             left: 20,
             right: 20,
             elevation: 0,
